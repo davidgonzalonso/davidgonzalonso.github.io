@@ -121,23 +121,34 @@
   .btn-ghost{color:var(--ink-dim);}
   .btn-ghost:hover{border-color:var(--amber); color:var(--amber);}
 
-  /* WAVEFORM SIGNATURE */
-  .scope{
+  /* BRANCHING SIGNATURE */
+  .paths-panel{
     position:relative; z-index:2;
     margin-top:64px;
     border:1px solid var(--line-strong);
     background:var(--bg-panel);
   }
-  .scope-readout{
+  .paths-readout{
     display:flex; justify-content:space-between; align-items:center;
     padding:10px 18px; border-bottom:1px solid var(--line);
     font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-faint);
     letter-spacing:0.04em;
   }
-  .scope-readout .dot{width:6px; height:6px; border-radius:50%; background:var(--cyan); display:inline-block; margin-right:6px; box-shadow:0 0 6px var(--cyan);}
-  .scope svg{display:block; width:100%; height:auto;}
-  .trace{fill:none; stroke:var(--amber); stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
-  .trace-2{fill:none; stroke:var(--cyan); stroke-width:1.2; stroke-linecap:round; opacity:0.55;}
+  .paths-readout .dot{width:6px; height:6px; border-radius:50%; background:var(--amber); display:inline-block; margin-right:6px; box-shadow:0 0 6px var(--amber);}
+  .paths-panel svg{display:block; width:100%; height:auto;}
+  .branch{fill:none; stroke-width:1.6; stroke-linecap:round;}
+  .origin-dot{fill:var(--ink);}
+  .end-dot{stroke-width:0;}
+  .path-labels{
+    display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
+    padding:14px 18px 16px; border-top:1px solid var(--line);
+  }
+  .path-label{
+    display:flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-faint);
+    letter-spacing:0.02em;
+  }
+  .path-label i{width:6px; height:6px; border-radius:50%; display:inline-block; flex:none;}
 
   /* LAB BANNER */
   .lab-banner{
@@ -325,15 +336,31 @@
       <a class="btn btn-ghost" href="#contact">Get in touch</a>
     </div>
 
-    <div class="scope reveal">
-      <div class="scope-readout">
-        <span><span class="dot"></span>CH1 · drift-field response</span>
-        <span>20 mV/div&nbsp;&nbsp;·&nbsp;&nbsp;25 ns/div&nbsp;&nbsp;·&nbsp;&nbsp;TRIG ✓</span>
+    <div class="paths-panel reveal">
+      <div class="paths-readout">
+        <span><span class="dot"></span>one origin, five directions</span>
+        <span>curiosity, plotted</span>
       </div>
-      <svg viewBox="0 0 1000 200" preserveAspectRatio="none">
-        <path class="trace-2" d="M0,150 L120,150 L145,150 C160,150 165,60 180,60 C195,60 200,150 215,150 L400,150 L420,150 C432,150 436,90 448,90 C460,90 464,150 476,150 L1000,150" />
-        <path id="mainTrace" class="trace" d="M0,120 L90,120 L110,120 C124,120 128,25 142,25 C156,25 160,140 174,140 C182,140 186,100 196,100 C204,100 208,120 220,120 L500,120 L520,120 C534,120 538,20 552,20 C566,20 570,150 584,150 C592,150 596,105 606,105 C614,105 618,120 630,120 L1000,120" />
+      <svg viewBox="0 0 1000 300" preserveAspectRatio="none">
+        <path class="branch" id="b1" stroke="#E8A33D" d="M40,150 C260,150 340,40 960,40" />
+        <path class="branch" id="b2" stroke="#5FC9D6" d="M40,150 C260,150 340,95 960,95" />
+        <path class="branch" id="b3" stroke="#E8A33D" opacity="0.55" d="M40,150 C260,150 340,150 960,150" />
+        <path class="branch" id="b4" stroke="#5FC9D6" opacity="0.55" d="M40,150 C260,150 340,205 960,205" />
+        <path class="branch" id="b5" stroke="#9FB0AC" d="M40,150 C260,150 340,260 960,260" />
+        <circle class="origin-dot" cx="40" cy="150" r="5" />
+        <circle class="end-dot" cx="960" cy="40" r="4" fill="#E8A33D" />
+        <circle class="end-dot" cx="960" cy="95" r="4" fill="#5FC9D6" />
+        <circle class="end-dot" cx="960" cy="150" r="4" fill="#E8A33D" />
+        <circle class="end-dot" cx="960" cy="205" r="4" fill="#5FC9D6" />
+        <circle class="end-dot" cx="960" cy="260" r="4" fill="#9FB0AC" />
       </svg>
+      <div class="path-labels">
+        <span class="path-label"><i style="background:#E8A33D"></i>Detector physics</span>
+        <span class="path-label"><i style="background:#5FC9D6"></i>Nuclear medicine</span>
+        <span class="path-label"><i style="background:#E8A33D"></i>Quantum foundations</span>
+        <span class="path-label"><i style="background:#5FC9D6"></i>Instrumentation</span>
+        <span class="path-label"><i style="background:#9FB0AC"></i>Leadership</span>
+      </div>
     </div>
   </div>
 </header>
@@ -616,17 +643,18 @@
   }, { threshold: 0.15 });
   revealEls.forEach(el => io.observe(el));
 
-  // Hero trace draw-in
-  const trace = document.getElementById('mainTrace');
-  if (trace && trace.getTotalLength) {
-    const len = trace.getTotalLength();
-    trace.style.strokeDasharray = len;
-    trace.style.strokeDashoffset = len;
+  // Hero branching paths draw-in, staggered
+  const branches = document.querySelectorAll('.branch');
+  branches.forEach((path, i) => {
+    if (!path.getTotalLength) return;
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
     requestAnimationFrame(() => {
-      trace.style.transition = 'stroke-dashoffset 1.8s cubic-bezier(.4,0,.2,1)';
-      trace.style.strokeDashoffset = '0';
+      path.style.transition = `stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1) ${i * 0.15}s`;
+      path.style.strokeDashoffset = '0';
     });
-  }
+  });
 </script>
 
 </body>
